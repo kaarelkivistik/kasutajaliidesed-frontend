@@ -1,4 +1,6 @@
 import React, {Component} from 'react';
+import { connect } from 'react-redux';
+import { goBack } from 'react-router-redux';
 import { Link } from 'react-router';
 import sortBy from 'sort-by';
 
@@ -47,7 +49,7 @@ class AssignmentTeacher extends Component {
 	}
 	
 	updateAssignment(isOpen, isGraded) {
-		const { params: { assignmentId } } = this.props;
+		const { params: { assignmentId }, goBack } = this.props;
 		
 		api("/assignments/" + assignmentId, {
 			method: "PUT",
@@ -84,7 +86,7 @@ class AssignmentTeacher extends Component {
 						
 						{isGraded ? 
 							<button style={filterStyle} className="btn btn-warning" onClick={this.updateAssignment.bind(this, isOpen, false)}>Mark as not graded</button> :
-							<button style={filterStyle} className="btn btn-primary" onClick={this.updateAssignment.bind(this, false, true)}>Mark as graded and close</button>}
+							<button style={filterStyle} className="btn btn-primary" onClick={this.updateAssignment.bind(this, false, true)}>Mark as graded{isOpen ? " and close" : null}</button>}
 					</div>
 				</div>
 			
@@ -115,4 +117,4 @@ class AssignmentTeacher extends Component {
 	}
 }
 
-export default AssignmentTeacher;
+export default connect(state => {return{}}, {goBack})(AssignmentTeacher);

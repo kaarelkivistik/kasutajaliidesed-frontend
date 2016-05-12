@@ -3,6 +3,9 @@ import { connect } from 'react-redux';
 import { push } from 'react-router-redux';
 import { Link } from 'react-router';
 
+import api from '../api';
+import { setUser } from '../redux';
+
 class LoginForm extends Component {
     constructor(props) {
         super(props);
@@ -11,11 +14,14 @@ class LoginForm extends Component {
         this.signIn = this.signIn.bind(this);
         this.signInSuccessful = this.signInSuccessful.bind(this);
         
-        this.state = {}
+        this.state = {
+            name: "kaarel",
+            password: "kaarel"
+        };
     }
       
     render() {
-        const { loading } = this.state;
+        const { loading, name, password } = this.state;
         
         return (
             <div className="container container-login">
@@ -23,13 +29,13 @@ class LoginForm extends Component {
                 <hr/>
                 <form onSubmit={this.onSubmit}>
                     <fieldset className="form-group">
-                        <input type="text" value={this.state.name} className="form-control" placeholder="Username" onChange={event => this.setState({name: event.target.value})}/>
+                        <input type="text" value={name} className="form-control" placeholder="Username" onChange={event => this.setState({name: event.target.value})}/>
                     </fieldset>
                     <fieldset className="form-group">
-                        <input type="password" className="form-control" placeholder="Password"/>
+                        <input type="password" value={password} className="form-control" placeholder="Password" onChange={event => this.setState({password: event.target.value})}/>
                     </fieldset>
                     
-                    <button className="btn btn-primary btn-block" disabled={loading}>{loading ? 'Loading..' : 'Sign in'}</button>
+                    <button className="btn btn-primary btn-block" disabled={loading || !name || !password}>{loading ? 'Loading..' : 'Sign in'}</button>
 					<Link to="/signup" className="btn btn-secondary btn-block">Sign up</Link>
                 </form>
             </div>
@@ -43,30 +49,41 @@ class LoginForm extends Component {
     }
     
     signIn() {
+        const { name, password } = this.state;
+        
         this.setState({
             loading: true
         });
         
-        setTimeout(this.signInSuccessful, 2000);
+        api("/auth", {
+            method: "POST",
+            body: {
+                name, password
+            }
+        }).then(this.signInSuccessful)
     }
     
-    signInSuccessful() {
+    signInSuccessful(user) {
+		const { push, setUser } = this.props;
+        
         this.setState({
             loading: false
         });
         
-		/* const { signedIn } = this.props;
+        if(!user)
+            return;
         
-        if(typeof signedIn === "func")
-            signedIn()*/
-			
-		const { name } = this.state;
-		const { push } = this.props;
+        const { _id, name, student, teacher } = user;
+        
+        setUser(name, student ? "student" : teacher ? "teacher" : undefined, _id);
 		
-		push(name === "student" ? "/student/assignments" : "/teacher/assignments");
+        if(student)
+            push("/student/assignments");
+        else if(teacher)
+            push("/teacher/assignments");
     }
 }
 
 LoginForm.defaultProps = {}
 
-export default connect(state => state, {push})(LoginForm);
+export default connect(state => state, {push, setUser})(LoginForm);

@@ -86,7 +86,7 @@ render(
 				
 				<Route path="student" component={Student}>
 					<Route path="assignments" component={AssignmentsStudent}/>
-					<Route path="assignments/:assignmentId/submission" component={AssignmentStudent}/>
+					<Route path="assignments/:assignmentId" component={AssignmentStudent}/>
 				</Route>
 			</Route>
 		</Router>

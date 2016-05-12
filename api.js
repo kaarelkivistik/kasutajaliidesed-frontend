@@ -33,8 +33,6 @@ export default function(endpoint, options = {}) {
 		fetchArguments.headers["Content-type"] = "application/json";
 	}
 	
-	fetchArguments.headers["Accept"] = "application/json";
-	
 	return new Promise((resolve, reject) => {
 		fetch(API_URL + endpoint + (queryString ? "?" + queryString : ""), fetchArguments).then(response => {
 			const contentType = response.headers.get("Content-Type");

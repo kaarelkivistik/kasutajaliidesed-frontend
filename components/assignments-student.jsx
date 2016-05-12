@@ -1,11 +1,14 @@
 import React, {Component} from 'react';
+import { connect } from 'react-redux';
 import moment from 'moment';
 import sortBy from 'sort-by';
 import { Link } from 'react-router';
 
+import api from '../api';
+
 const format = "DD.MM.YYYY";
 
-const assignments = [{
+/*const assignments = [{
 	id: 0,
 	name: "First assignment",
 	due: moment().add(0 * 5, "days").valueOf(),
@@ -52,9 +55,10 @@ const assignments = [{
 	graded: false
 }];
 
-assignments.sort(sortBy("submitted", "graded", "due"));
+assignments.sort(sortBy("submitted", "graded", "due"));*/
 
 const ok = <i className="fa fa-check-circle"/>;
+const circle = <i className="fa fa-circle"/>;
 const notOk = <i className="fa fa-circle-o"/>;
 
 const filterStyle = {
@@ -63,16 +67,55 @@ const filterStyle = {
 };
 
 class Assignments extends Component {
+	
+	constructor(props) {
+		super(props);
+		
+		this.state = {
+			filter: "all",
+			assignments: []
+		};
+	}
+	
+	componentWillMount() {
+		const { user: { id: studentId }} = this.props;
+		
+		api("/students/" + studentId + "/submissions").then(assignments => {
+			const parsedAssignments = assignments.map(assignment => {
+				assignment.due = new Date(assignment.due);
+				assignment.isSubmitted = !!assignment.submission;
+				assignment.submissionIsGraded = !!(assignment.isSubmitted && assignment.submission.graded);
+				
+				assignment.points = assignment.properties.reduce((sum, current) => {
+					return sum + current.pointsTo;
+				}, 0);
+				
+				assignment.pointsEarned = assignment.submissionIsGraded ? assignment.submission.properties.reduce((sum, current) => {
+					return sum + current.value;
+				}, 0) : NaN;
+				
+				return assignment;
+			});
+			
+			// parsedAssignments.sort(sortBy("isSubmitted", "submissionIsGraded", "due"));
+			parsedAssignments.sort(sortBy("submissionIsGraded", "isSubmitted", "-isOpen"));
+			
+			this.setState({
+				assignments: parsedAssignments
+			});
+		}, error => {
+			console.error(error);
+		});
+	}
+	
 	render() {
+		const { assignments } = this.state;
+		
+		if(!assignments)
+			return <h4>Wait...</h4>;
+		
 		return (
 			<div>
-				<p>
-					Show 
-					<a href="#" style={filterStyle}><b>all</b></a>
-					<a href="#" style={filterStyle}>due soon</a>
-					<a href="#" style={filterStyle}>submitted, but not graded</a>
-					<a href="#" style={filterStyle}>graded</a>
-				</p>
 				
 				<table className="table table-hover">
 					<thead>
@@ -80,19 +123,22 @@ class Assignments extends Component {
 							<th>Assignment</th>
 							<th className="text-xs-center">Due</th>
 							<th className="text-xs-center">Score</th>
+							<th className="text-xs-center">Open?</th>
 							<th className="text-xs-center">Submitted?</th>
 							<th className="text-xs-center">Graded?</th>
 						</tr>
 					</thead>
 					
 					<tbody>
-						{assignments.map(({id, name, due, soonDue, points, pointsEarned, submitted, graded}) => {
-							return <tr key={id} className={soonDue ? "table-danger" : graded ? "table-success" : submitted ? "table-info" : ""}>
-									<td><Link to="/student/assignments/1/submission">{name}</Link></td>
+						{assignments.map(({_id: id, title, due, soonDue, points, pointsEarned, isSubmitted, submissionIsGraded, isOpen}) => {
+							return <tr key={id} 
+								className={submissionIsGraded ? "table-success" : isSubmitted ? "table-info" : isOpen ? "table-active" : ""}>
+									<td><Link to={"/student/assignments/" + id}>{title}</Link></td>
 									<td className="text-xs-center">{soonDue ? <i className="fa fa-exclamation-circle"/> : null} {moment(due).format(format)}</td>
-									<td className="text-xs-center">{graded ? <span><b>{pointsEarned}</b> out of <b>{points}</b></span> : <b>{points}</b>}</td>
-									<td className="text-xs-center">{submitted ? ok : notOk}</td>
-									<td className="text-xs-center">{graded ? ok : notOk}</td>
+									<td className="text-xs-center">{submissionIsGraded ? <span><b>{pointsEarned}</b> out of <b>{points}</b></span> : <b>-</b>}</td>
+									<td className="text-xs-center">{submissionIsGraded ? circle : isOpen ? ok : notOk}</td>
+									<td className="text-xs-center">{isSubmitted ? ok : notOk}</td>
+									<td className="text-xs-center">{submissionIsGraded ? ok : notOk}</td>
 								</tr>
 						})}
 					</tbody>
@@ -102,4 +148,12 @@ class Assignments extends Component {
 	}
 }
 
-export default Assignments;
+export default connect(state => state)(Assignments);
+
+/*<p>
+Show 
+<a href="#" style={filterStyle}><b>all</b></a>
+<a href="#" style={filterStyle}>due soon</a>
+<a href="#" style={filterStyle}>submitted, but not graded</a>
+<a href="#" style={filterStyle}>graded</a>
+</p>*/

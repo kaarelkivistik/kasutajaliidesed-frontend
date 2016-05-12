@@ -39,7 +39,9 @@ class Assignments extends Component {
 				return assignment;
 			});
 			
-			parsedAssignments.sort(sortBy("-isOpen", "isGraded", "due"));
+			console.log(assignments);
+			
+			parsedAssignments.sort(sortBy("isGraded", "-isOpen", "due"));
 			
 			this.setState({
 				assignments: parsedAssignments
@@ -59,7 +61,7 @@ class Assignments extends Component {
 					<div className="form-group">
 						Show
 					
-						{["all", "open", "graded"].map(aFilter => <button 
+						{["all", "open", "not yet open", "graded"].map(aFilter => <button 
 							key={aFilter}
 							className={"btn btn-" + (filter === aFilter ? "primary" : "link")} 
 							style={filterStyle} 
@@ -82,6 +84,8 @@ class Assignments extends Component {
 							{assignments.filter(assignment => {
 								if(filter === "open")
 									return assignment.isOpen;
+								if(filter === "not yet open")
+									return !assignment.isOpen && !assignment.isGraded;
 								else if(filter === "graded")
 									return assignment.isGraded;
 								else

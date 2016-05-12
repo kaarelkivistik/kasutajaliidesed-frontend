@@ -134,7 +134,7 @@ class SubmissionTeacher extends Component {
 						<button 
 							className="btn btn-primary" 
 							onClick={this.submitChanges} 
-							disabled={errorsExist}>Save changes</button>
+							disabled={errorsExist}>Mark as graded</button>
 							
 						{errorsExist ? <p className="form-control-static" style={{marginLeft: 20}}>{apiError ? apiErrorText : errorsExist ? invalidPointsText : ""}</p> : null}
 					</div>

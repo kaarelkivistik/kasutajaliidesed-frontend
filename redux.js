@@ -5,22 +5,24 @@ import { syncHistoryWithStore, routerReducer, routerMiddleware } from 'react-rou
 
 /* Actions */
 
-export function setUser(name) {
+export function setUser(name, role, id) {
+	localStorage.setItem("user", JSON.stringify({name, role, id}));
+	
 	return {
 		type: "SET_USER",
-		name
+		name, role, id
 	}
 }
 
 /* Reducers */
 
-function user(state = {}, action) {
+function user(state = JSON.parse(localStorage.getItem("user")) || {}, action) {
 	switch (action.type) {
 		case "SET_USER":
-			const { name } = action;
+			const { name, role, id } = action;
 			
 			return {
-				name
+				name, role, id
 			};
 	
 		default:
